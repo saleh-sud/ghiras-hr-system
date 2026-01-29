@@ -1,5 +1,4 @@
-
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Calendar as CalendarIcon, 
   LayoutDashboard, 
@@ -17,6 +16,10 @@ import {
   ShieldAlert,
   UserCircle
 } from 'lucide-react';
+
+// استيراد مكتبة الإشعارات من Capacitor
+import { PushNotifications } from '@capacitor/push-notifications';
+
 import { User, Role, LeaveRequest, RequestStatus, LeaveType, AttendanceRecord } from './types';
 import { INITIAL_USERS, INITIAL_REQUESTS } from './constants';
 import Dashboard from './components/Dashboard';
@@ -38,6 +41,42 @@ const App: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const officeLocation = { lat: 24.7136, lng: 46.6753 }; 
+
+  // --- نظام الإشعارات ---
+  useEffect(() => {
+    // تشغيل الإشعارات فقط عند تسجيل الدخول وعلى بيئة الجوال
+    if (isLoggedIn) {
+      setupPushNotifications();
+    }
+  }, [isLoggedIn]);
+
+  const setupPushNotifications = async () => {
+    try {
+      let permStatus = await PushNotifications.checkPermissions();
+
+      if (permStatus.receive === 'prompt') {
+        permStatus = await PushNotifications.requestPermissions();
+      }
+
+      if (permStatus.receive === 'granted') {
+        await PushNotifications.register();
+      }
+
+      // الحصول على توكن الجهاز (مهم لإرسال إشعارات للمدير)
+      PushNotifications.addListener('registration', (token) => {
+        console.log('Push Token:', token.value);
+        // هنا يمكنك إرسال التوكن لقاعدة بياناتك لربطه بحساب المستخدم
+      });
+
+      // تنبيه عند وصول إشعار والتطبيق مفتوح
+      PushNotifications.addListener('pushNotificationReceived', (notification) => {
+        alert(`تنبيه جديد: ${notification.title}\n${notification.body}`);
+      });
+
+    } catch (error) {
+      console.warn("إشعارات Push تعمل فقط على أجهزة الجوال الحقيقية.");
+    }
+  };
 
   const remainingBalance = useMemo(() => {
     if (!currentUser) return 0;
@@ -75,6 +114,9 @@ const App: React.FC = () => {
     };
     setRequests([fullRequest, ...requests]);
     setActiveTab('dashboard');
+    
+    // ملاحظة: هنا يجب استدعاء دالة إرسال الإشعار للمدير (FCM)
+    console.log("تم تقديم الطلب، سيتم إرسال إشعار للمدير:", currentUser.managerEmail);
   };
 
   const deleteUser = (userId: string) => {
@@ -110,6 +152,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans" dir="rtl">
+      {/* Sidebar & Content Code (باقي الكود الخاص بك كما هو) */}
       <header className="md:hidden bg-indigo-950 text-white p-4 flex items-center justify-between shadow-xl sticky top-0 z-50">
         <h1 className="font-bold text-lg">غراس النهضة</h1>
         <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 bg-indigo-900 rounded-lg"><Menu /></button>

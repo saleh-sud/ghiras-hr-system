@@ -22,15 +22,12 @@ jobs:
           distribution: 'temurin'
 
       - name: Install Dependencies
-        run: npm install
-
-      - name: Prepare Web Assets
         run: |
-          mkdir -p www
-          # نسخ شامل لكل الملفات للمجلد www لضمان عمل التطبيق
-          cp -rn * www/ || true
-          # التأكد من وجود ملف index.html في المجلد المطلوب
-          ls www/index.html
+          npm install
+          npm install @capacitor/push-notifications
+
+      - name: Build React Project
+        run: npm run build
 
       - name: Sync Capacitor
         run: npx cap sync android
@@ -44,5 +41,5 @@ jobs:
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Ghiras-HR-App
+          name: Ghiras-HR-App-Final
           path: android/app/build/outputs/apk/debug/app-debug.apk
