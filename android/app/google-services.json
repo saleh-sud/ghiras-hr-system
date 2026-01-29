@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "811713668280",
+    "project_id": "ghiras-al-nahda-hr-system",
+    "storage_bucket": "ghiras-al-nahda-hr-system.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:811713668280:android:7713ff79cca2eaa625c04d",
+        "android_client_info": {
+          "package_name": "com.example.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDZ6hySnopIwBnSP6X2wxbLSm_76QsYkAc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

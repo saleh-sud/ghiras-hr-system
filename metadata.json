@@ -1,0 +1,8 @@
+
+{
+  "name": "Ghiras Al Nahda HR System",
+  "description": "نظام غراس النهضة المتكامل لإدارة الموارد البشرية والدوام الذكي.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
