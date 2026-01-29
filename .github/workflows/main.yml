@@ -10,6 +10,11 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22' # تحديث النسخة لحل خطأ Capacitor
+
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
@@ -19,12 +24,15 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      # الخطوة السحرية: إنشاء مجلد www ونسخ الملفات إليه
       - name: Prepare Web Assets
         run: |
           mkdir -p www
-          cp -r * www/ || true
-          rm -rf www/node_modules www/android www/www # تنظيف المجلد من الملفات غير الضرورية
+          # نسخ ملفات المشروع إلى مجلد www ليرضى عنها Capacitor
+          cp -v index.html www/ || true
+          cp -rv assets www/ || true
+          cp -v main.js www/ || true
+          cp -v index.css www/ || true
+          # ملاحظة: إذا كان عندك ملفات أخرى هامة انسخها بنفس الطريقة هنا
 
       - name: Sync Capacitor
         run: npx cap sync android
@@ -38,5 +46,5 @@ jobs:
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Ghiras-HR-App
+          name: Ghiras-HR-App-New
           path: android/app/build/outputs/apk/debug/app-debug.apk
