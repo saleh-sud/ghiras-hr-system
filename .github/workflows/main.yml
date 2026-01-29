@@ -15,7 +15,7 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Set up JDK 21 # تم التحديث من 17 إلى 21
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           java-version: '21'
@@ -24,9 +24,8 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Build Web Project
-        run: npm run build
-
+      # حذفنا سطر npm run build لأنه لا يوجد عندك مجلد src
+      # سنقوم بمزامنة الملفات مباشرة
       - name: Sync Capacitor
         run: npx cap sync android
 
