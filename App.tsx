@@ -1,23 +1,11 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { 
-  Calendar as CalendarIcon, 
-  LayoutDashboard, 
-  FileText, 
-  Users, 
-  Settings, 
-  Bell, 
-  Menu, 
-  X,
-  PlusCircle,
-  CheckCircle,
-  Clock,
-  Fingerprint,
-  LogOut,
-  ShieldAlert,
-  UserCircle
+  Calendar as CalendarIcon, LayoutDashboard, FileText, Users, Settings, 
+  Bell, Menu, X, PlusCircle, CheckCircle, Clock, Fingerprint, 
+  LogOut, ShieldAlert, UserCircle 
 } from 'lucide-react';
 
-// استيراد مكتبة الإشعارات من Capacitor
+// استيراد مكتبة الإشعارات
 import { PushNotifications } from '@capacitor/push-notifications';
 
 import { User, Role, LeaveRequest, RequestStatus, LeaveType, AttendanceRecord } from './types';
@@ -42,41 +30,29 @@ const App: React.FC = () => {
 
   const officeLocation = { lat: 24.7136, lng: 46.6753 }; 
 
-  // --- نظام الإشعارات ---
+  // تفعيل الإشعارات عند الدخول
   useEffect(() => {
-    // تشغيل الإشعارات فقط عند تسجيل الدخول وعلى بيئة الجوال
     if (isLoggedIn) {
-      setupPushNotifications();
+      const setupNotifications = async () => {
+        try {
+          let perm = await PushNotifications.checkPermissions();
+          if (perm.receive === 'prompt') perm = await PushNotifications.requestPermissions();
+          if (perm.receive === 'granted') await PushNotifications.register();
+
+          PushNotifications.addListener('registration', (token) => {
+            console.log('Push Token:', token.value);
+          });
+
+          PushNotifications.addListener('pushNotificationReceived', (notification) => {
+            alert(`إشعار: ${notification.title}\n${notification.body}`);
+          });
+        } catch (e) {
+          console.warn("إشعارات الجوال غير متاحة في المتصفح.");
+        }
+      };
+      setupNotifications();
     }
   }, [isLoggedIn]);
-
-  const setupPushNotifications = async () => {
-    try {
-      let permStatus = await PushNotifications.checkPermissions();
-
-      if (permStatus.receive === 'prompt') {
-        permStatus = await PushNotifications.requestPermissions();
-      }
-
-      if (permStatus.receive === 'granted') {
-        await PushNotifications.register();
-      }
-
-      // الحصول على توكن الجهاز (مهم لإرسال إشعارات للمدير)
-      PushNotifications.addListener('registration', (token) => {
-        console.log('Push Token:', token.value);
-        // هنا يمكنك إرسال التوكن لقاعدة بياناتك لربطه بحساب المستخدم
-      });
-
-      // تنبيه عند وصول إشعار والتطبيق مفتوح
-      PushNotifications.addListener('pushNotificationReceived', (notification) => {
-        alert(`تنبيه جديد: ${notification.title}\n${notification.body}`);
-      });
-
-    } catch (error) {
-      console.warn("إشعارات Push تعمل فقط على أجهزة الجوال الحقيقية.");
-    }
-  };
 
   const remainingBalance = useMemo(() => {
     if (!currentUser) return 0;
@@ -114,9 +90,6 @@ const App: React.FC = () => {
     };
     setRequests([fullRequest, ...requests]);
     setActiveTab('dashboard');
-    
-    // ملاحظة: هنا يجب استدعاء دالة إرسال الإشعار للمدير (FCM)
-    console.log("تم تقديم الطلب، سيتم إرسال إشعار للمدير:", currentUser.managerEmail);
   };
 
   const deleteUser = (userId: string) => {
@@ -124,21 +97,17 @@ const App: React.FC = () => {
       alert('لا يمكن حذف حساب المسؤول العام الرئيسي');
       return;
     }
-    if (window.confirm('هل أنت متأكد من رغبتك في حذف هذا الحساب نهائياً؟')) {
+    if (window.confirm('هل أنت متأكد؟')) {
       setUsers(users.filter(u => u.id !== userId));
     }
   };
 
   const updateUser = (updatedUser: User) => {
     setUsers(users.map(u => u.id === updatedUser.id ? updatedUser : u));
-    if (currentUser?.id === updatedUser.id) {
-      setCurrentUser(updatedUser);
-    }
+    if (currentUser?.id === updatedUser.id) setCurrentUser(updatedUser);
   };
 
-  if (!isLoggedIn || !currentUser) {
-    return <Login onLogin={handleLogin} />;
-  }
+  if (!isLoggedIn || !currentUser) return <Login onLogin={handleLogin} />;
 
   const sidebarItems = [
     { id: 'dashboard', label: 'لوحة التحكم', icon: LayoutDashboard },
@@ -152,72 +121,35 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans" dir="rtl">
-      {/* Sidebar & Content Code (باقي الكود الخاص بك كما هو) */}
       <header className="md:hidden bg-indigo-950 text-white p-4 flex items-center justify-between shadow-xl sticky top-0 z-50">
         <h1 className="font-bold text-lg">غراس النهضة</h1>
         <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 bg-indigo-900 rounded-lg"><Menu /></button>
       </header>
 
-      <aside className={`
-        fixed md:static inset-y-0 right-0 z-40 w-72 bg-indigo-950 text-white transform 
-        ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'} 
-        md:translate-x-0 transition-transform duration-300 ease-in-out shadow-2xl flex flex-col
-      `}>
+      <aside className={`fixed md:static inset-y-0 right-0 z-40 w-72 bg-indigo-950 text-white transform ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'} md:translate-x-0 transition-transform duration-300 ease-in-out shadow-2xl flex flex-col`}>
         <div className="p-8 text-right border-b border-indigo-900/50">
-          <div className="w-12 h-12 bg-indigo-500 rounded-xl mb-4 flex items-center justify-center shadow-lg">
-            <ShieldAlert className="text-white" size={28} />
-          </div>
+          <div className="w-12 h-12 bg-indigo-500 rounded-xl mb-4 flex items-center justify-center shadow-lg"><ShieldAlert className="text-white" size={28} /></div>
           <h2 className="text-2xl font-black tracking-tight">غراس النهضة</h2>
-          <p className="text-indigo-400 text-xs font-bold uppercase mt-1">نظام Ghiras لإدارة الموارد</p>
         </div>
-
         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
           {sidebarItems.map((item) => !item.hide && (
-            <button
-              key={item.id}
-              onClick={() => { setActiveTab(item.id as any); setIsSidebarOpen(false); }}
-              className={`
-                w-full flex items-center space-x-3 space-x-reverse px-5 py-4 rounded-2xl transition-all
-                ${activeTab === item.id ? 'bg-indigo-600 text-white shadow-xl' : 'text-indigo-300 hover:bg-indigo-900/50 hover:text-white'}
-              `}
-            >
-              <item.icon size={22} />
-              <span className="font-bold text-base">{item.label}</span>
-            </button>
+            <button key={item.id} onClick={() => { setActiveTab(item.id as any); setIsSidebarOpen(false); }} className={`w-full flex items-center space-x-3 space-x-reverse px-5 py-4 rounded-2xl transition-all ${activeTab === item.id ? 'bg-indigo-600 text-white shadow-xl' : 'text-indigo-300 hover:bg-indigo-900/50 hover:text-white'}`}><item.icon size={22} /> <span className="font-bold text-base">{item.label}</span></button>
           ))}
         </nav>
-
         <div className="p-6 border-t border-indigo-900/50">
-          <div className="bg-indigo-900/40 p-4 rounded-2xl mb-4 flex items-center space-x-3 space-x-reverse border border-indigo-800/30">
-            <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center border-2 border-indigo-500">
-               <UserCircle size={24} className="text-indigo-200" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-black text-xs truncate">{currentUser.name}</p>
-              <p className="text-[10px] text-indigo-400 font-bold uppercase">{currentUser.role}</p>
-            </div>
-          </div>
-          <button 
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center space-x-2 space-x-reverse py-3 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white rounded-xl transition-all text-sm font-bold"
-          >
-            <LogOut size={16} />
-            <span>تسجيل الخروج</span>
-          </button>
+          <button onClick={handleLogout} className="w-full flex items-center justify-center space-x-2 space-x-reverse py-3 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white rounded-xl transition-all text-sm font-bold"><LogOut size={16} /><span>تسجيل الخروج</span></button>
         </div>
       </aside>
 
       <main className="flex-1 overflow-auto">
         <div className="p-4 md:p-10 max-w-7xl mx-auto">
-          <div className="animate-in fade-in duration-500">
-            {activeTab === 'dashboard' && <Dashboard user={currentUser} requests={requests} remainingBalance={remainingBalance} attendance={attendance} />}
-            {activeTab === 'attendance' && <AttendanceSystem user={currentUser} onClockAction={(rec) => setAttendance([...attendance, rec])} records={attendance} officeLocation={officeLocation} />}
-            {activeTab === 'calendar' && <LeaveCalendar requests={requests} />}
-            {activeTab === 'request' && <RequestForm user={currentUser} remainingBalance={remainingBalance} onSubmit={addRequest} officeLocation={officeLocation} />}
-            {activeTab === 'approvals' && <ApprovalsList user={currentUser} requests={requests} onStatusChange={(id, status) => setRequests(reqs => reqs.map(r => r.id === id ? {...r, status} : r))} />}
-            {activeTab === 'users' && <UserManagement users={users} onAddUser={(u) => setUsers([...users, {...u, id: `u-${Date.now()}`}])} onDeleteUser={deleteUser} onUpdateUser={updateUser} />}
-            {activeTab === 'reports' && <Reports requests={requests} users={users} attendance={attendance} />}
-          </div>
+          {activeTab === 'dashboard' && <Dashboard user={currentUser} requests={requests} remainingBalance={remainingBalance} attendance={attendance} />}
+          {activeTab === 'attendance' && <AttendanceSystem user={currentUser} onClockAction={(rec) => setAttendance([...attendance, rec])} records={attendance} officeLocation={officeLocation} />}
+          {activeTab === 'calendar' && <LeaveCalendar requests={requests} />}
+          {activeTab === 'request' && <RequestForm user={currentUser} remainingBalance={remainingBalance} onSubmit={addRequest} officeLocation={officeLocation} />}
+          {activeTab === 'approvals' && <ApprovalsList user={currentUser} requests={requests} onStatusChange={(id, status) => setRequests(reqs => reqs.map(r => r.id === id ? {...r, status} : r))} />}
+          {activeTab === 'users' && <UserManagement users={users} onAddUser={(u) => setUsers([...users, {...u, id: `u-${Date.now()}`}])} onDeleteUser={deleteUser} onUpdateUser={updateUser} />}
+          {activeTab === 'reports' && <Reports requests={requests} users={users} attendance={attendance} />}
         </div>
       </main>
     </div>
