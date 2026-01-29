@@ -5,7 +5,8 @@ const config: CapacitorConfig = {
   appName: 'ghiras-al-nahda-hr-system',
   webDir: 'dist',
   server: {
-    androidScheme: 'https' // يمنع حظر الملفات المحلية في أندرويد
+    androidScheme: 'https',
+    cleartext: true
   }
 };
 
